@@ -28,8 +28,32 @@
     color:green;
 }
 .padding-container{
-    padding-top: 100px;
+    padding-top: auto;
     padding-right: 30px;
-    padding-bottom: 0px;
+    padding-bottom: 400px;
     padding-left: 650px;
+}
+
+.padding{
+    padding-top: 40px;
+}
+
+.container-layout2 {
+   background-color:white;
+   /*width:60vw;*/
+/*  padding: 100px;*/
+  border: 1px solid black;
+  border-radius: 25px;
+  margin:auto;
+  margin-top: 60px;
+}
+
+.container-layout3 {
+   background-color:white;
+   /*width:60vw;*/
+/*  padding: 100px;*/
+  border: 1px solid black;
+  border-radius: 25px;
+  margin:auto;
+  margin-top: 15px;
 }
