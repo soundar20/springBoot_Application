@@ -18,9 +18,7 @@ and open the template in the editor.
         <div>
             <div class="row">
                 <div class="col-sm-1 offset-md-11">
-                    <button>
-                        <a href="logout">Logout</a>
-                    </button>
+                        <button type="submit" class="btn btn-primary btn-sm"><a class="btn btn-primary btn-sm" href="logout">Logout</a></button>
                 </div> 
             </div>
             <div style="text-align:center">
@@ -28,14 +26,16 @@ and open the template in the editor.
             </div>
             <div  class="row">
                 <div class="col-sm-4 offset-md-1">                    
-                    <div th:if="${projectDetailsList.size()>0}">
-                        <h3 style="text-align: center; margin: 15px; color: white;">
-                            Available Projects
-                        </h3>
+                    <div th:if="${projectDetailsList.size()>0}">                     
+                        <div>
+                            <h3 style="text-align: center; margin: 15px; color: white;">Available Projects
+                                <a style="float: right;" class="btn btn-primary btn-sm" role="button" href="viewAllProject">view all</a>
+                            </h3>                           
+                        </div>
                     </div>
                     <div style='overflow-y: scroll ;height: 600px;' th:if="${projectDetailsList.size()>0}">                       
                         <div style="margin: 10px;">
-                            <div class="container-layout3" th:each="projectDetail :${projectDetailsList}">
+                            <div class="container-layout3" th:each="projectDetail, index :${projectDetailsList}" th:if="${index.index<2}">
                                 <div style="margin: 20px;">
                                     <div style="margin: 10px;">                      
                                         <p th:text="${'Project : ' + projectDetail.getProjectName()}"></p>
@@ -50,9 +50,7 @@ and open the template in the editor.
                                         <form action="joinProject" method="post">
                                             <input type="hidden" name="userEmail" id='userEmail' th:value="${userData.getUserEmail()}"> 
                                              <input type="hidden" name="projectId" id='projectId' th:value="${projectDetail.getProjectId()}">
-                                            <button type="submit" name="join" >
-                                                Join Project
-                                            </button>
+                                        <button type="submit" class="btn btn-primary btn-sm"><a class="btn btn-primary btn-sm" name="join">Join Project</a></button>
                                         </form>                                   
                                    </div>   
                                    <div th:if="${joinMessage}">

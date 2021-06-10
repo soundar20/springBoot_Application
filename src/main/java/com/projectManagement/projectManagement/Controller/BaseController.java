@@ -1,25 +1,29 @@
 package com.projectManagement.projectManagement.Controller;
 
-import com.projectManagement.projectManagement.Model.ProjectDetails;
-import com.projectManagement.projectManagement.Model.UserAccountModel;
-import com.projectManagement.projectManagement.Service.InterfaceProjectDetails;
-import com.projectManagement.projectManagement.Service.InterfaceUserAccount;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+
+import com.projectManagement.projectManagement.Model.ProjectDetails;
+import com.projectManagement.projectManagement.Model.TeamMembers;
+import com.projectManagement.projectManagement.Model.UserAccountModel;
+import com.projectManagement.projectManagement.Service.InterfaceProjectDetails;
+import com.projectManagement.projectManagement.Service.InterfaceTeamMembers;
+import com.projectManagement.projectManagement.Service.InterfaceUserAccount;
 
 @Controller
 public class BaseController {
@@ -29,6 +33,9 @@ public class BaseController {
 
     @Autowired
     InterfaceProjectDetails interfaceProjectDetails;
+
+    @Autowired
+    InterfaceTeamMembers interfaceTeamMembers;
 
     @GetMapping("/")
     public ModelAndView index() {
@@ -111,7 +118,7 @@ public class BaseController {
         return mv;
     }
 
-    @PostMapping("/logout")
+    @GetMapping("/logout")
     public ModelAndView logOut(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("post logout");
         ModelAndView mv = new ModelAndView("home");
@@ -244,20 +251,41 @@ public class BaseController {
                 System.out.println("project details : " + projectDetails);
                 System.out.println("projectDetails : " + projectDetails.getProjectCapacity());
                 if (!projectDetails.getProjectAdmin().equals(userEmail)) {
-                    //if(userEmail!=proj...)
-                    System.out.println("chceking validation: "+userEmail +" and "+ projectDetails.getProjectAdmin());
+                    // if(userEmail!=proj...)
+                    System.out
+                            .println("chceking validation: " + userEmail + " and " + projectDetails.getProjectAdmin());
                     System.out.println("user not admin");
-                    if (projectDetails.getProjectCapacity() < 5) {
-                        System.out.println("getProjectCapacity() :" + projectDetails.getProjectCapacity());
-                        projectDetails.setProjectCapacity(projectDetails.getProjectCapacity() + 1);
-                        interfaceProjectDetails.save(projectDetails);
-                        mv.addObject("joinMessage", "user joined");
-                        mv.addObject("joinStatus", true);
-                        System.out.println("user added");
+                    // validate the useremail and projectid in the team members if its null the user
+                    // allow to join the project
+                    TeamMembers get = interfaceTeamMembers.findByMemberEmailAndProjectId(uAccountModel.getUserEmail(),
+                            projectDetails.getProjectId());
+                    System.out.println("email and project id : " + get);
+                    if (get == null) {
+                        if (projectDetails.getProjectCapacity() < 3) {
+                            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                            LocalDateTime now = LocalDateTime.now();
+                            System.out.println(dtf.format(now));
+                            TeamMembers teamMembers = new TeamMembers();
+                            teamMembers.setProjectName(projectDetails.getProjectName());
+                            teamMembers.setMemberUserName(uAccountModel.getUserName());
+                            teamMembers.setMemberEmail(uAccountModel.getUserEmail());
+                            teamMembers.setJoinDate(dtf.format(now));
+                            teamMembers.setProjectId(projectDetails.getProjectId());
+                            interfaceTeamMembers.save(teamMembers);
+                            System.out.println("getProjectCapacity() :" + projectDetails.getProjectCapacity());
+                            projectDetails.setProjectCapacity(projectDetails.getProjectCapacity() + 1);
+                            interfaceProjectDetails.save(projectDetails);
+                            mv.addObject("joinMessage", "user joined");
+                            mv.addObject("joinStatus", true);
+                            System.out.println("user added");
 
+                        } else {
+                            System.out.println("max capacity is 5");
+                            mv.addObject("joinMessage", "maximum capacity is 5");
+                            mv.addObject("joinStatus", false);
+                        }
                     } else {
-                        System.out.println("max capacity is 5");
-                        mv.addObject("joinMessage", "maximum capacity is 5");
+                        mv.addObject("joinMessage", "The user is already exists");
                         mv.addObject("joinStatus", false);
                     }
                 } else {
@@ -268,7 +296,7 @@ public class BaseController {
                 }
                 mv.addObject("userData", uAccountModel);
             } else {
-                                    System.out.println("user not found");
+                System.out.println("user not found");
 
                 mv.addObject("joinMessage", "user not found");
                 mv.addObject("joinStatus", false);
@@ -281,5 +309,43 @@ public class BaseController {
         mv.addObject("projectDetailsList", getProjectDetails);
         return mv;
     }
+    
+    @GetMapping("/viewAllProject")
+    public ModelAndView viewAllProject(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("get view all Project");
+        ModelAndView mv = new ModelAndView("viewproject");
+        List<ProjectDetails> getProjectDetails = interfaceProjectDetails.findAll();
+        System.out.println("Project from DB : " + getProjectDetails);
+        // get the user email from session valid the user email from the user DB if the
+        // user is available send the user date to the ui as a object
+        HttpSession session = request.getSession();
+        String email = (String) session.getAttribute("userEmail");
+        System.out.println("Session value: " + email);
+        String regex = "^(.+)@(.+)$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(email);
+        boolean emailVaildator = matcher.matches();
+        System.out.println("Email validation: " + emailVaildator);
+        if (emailVaildator == true) {
+            System.out.println("Email is valid");
+            UserAccountModel uAccountModel = interfaceUserAccount.findByUserEmail(email);
+            System.out.println("Get User By Email : " + uAccountModel);
+            if (uAccountModel != null) {
+                mv.addObject("userData", uAccountModel);
+            } else {
+                mv.addObject("message", "user not found");
+                mv.addObject("status", false);
+            }
+        } else {
+            mv.addObject("message", "session user not found");
+            mv.addObject("status", false);
+        }
+        System.out.println("projectDetailsList: " + getProjectDetails.isEmpty());
+        System.out.println("projectDetailsList: " + getProjectDetails.size());
+        mv.addObject("projectDetailsList", getProjectDetails);
+        return mv;
+    }
+
+
 
 }

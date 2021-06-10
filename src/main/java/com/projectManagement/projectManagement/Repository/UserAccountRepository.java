@@ -21,5 +21,5 @@ public interface UserAccountRepository extends CrudRepository<UserAccountModel,I
     public UserAccountModel findByUserEmailAndUserPassword(@Param("userEmail")String userEmail,@Param("userPassword")String userPassword);
     
     public UserAccountModel save(UserAccountModel userAccountModel);
-    
+
 }
